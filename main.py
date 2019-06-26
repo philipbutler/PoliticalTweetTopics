@@ -60,6 +60,7 @@ else:
             texts = []
             for i in docSet:
                 raw = i.lower()
+                #RegEx that removes URLs & mentions
                 raw = re.sub(r"(http.*? )|(http.*?$)|(@.*? )|(@.*?$)", "", raw, flags=re.DOTALL)
                 tokens = tokenizer.tokenize(raw)
                 stopped_tokens = [x for x in tokens if not x in en_stop]
@@ -108,6 +109,12 @@ else:
     cdf = pd.DataFrame(cDict, index = cIndex)
     cdf.to_pickle('./CorrDf.p')
 
+''' SIDENOTE: I realize the list comprehensions and nested for loops above are convoluted & 
+    inefficient. If we wanted a runtime of seconds instead of minutes, NumPy vectorization could provide
+    solutions for this. But this code runs in minutes and runs one time, and then the results 
+    are saved to later be acted on, so it's an admissable solution in this case.
+'''
+
 '''
 #For a good option of a threshold, 1s -> 0s, get max series, drop null values, get minimum
 maxs = (cdf*(1-np.eye(cdf.shape[0]))).max()
@@ -116,6 +123,11 @@ cdf = cdf.stack().sort_values()
 '''
 
 #Create Topic Graph
+''' Called s2t for "string to tuple", is a work around that allows us 
+    to use a string to index a data structure that would normally
+    require a tuple. Ex: s2t["("cruz", 5, 2)"] returns the tuple ("cruz", 5, 0)
+    Namely this is the index for Cruz's first topic of the 5th time period.
+'''
 s2t = {"('" + NAME[j] + "', " + str(i) + ", " + str(k) + ")" : (NAME[j], i, k) 
               for j in range(7) for i in range(105) for k in range(3)}
 t = cdf.stack([0,1,2]).sort_values(0, ascending=False).reset_index()
